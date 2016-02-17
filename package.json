@@ -1,6 +1,6 @@
 {
   "name": "mongoose-strictmodel",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Mongoose plugin that forces Mongoose queries to respect your Mongoose models.",
   "main": "index.js",
   "scripts": {
@@ -11,7 +11,12 @@
     "url": "git+https://github.com/samhagman/mongoose-strictmodel.git"
   },
   "keywords": [
-    "mongoose", "model", "models", "plugin", "mongo", "MongoDB"
+    "mongoose",
+    "model",
+    "models",
+    "plugin",
+    "mongo",
+    "MongoDB"
   ],
   "author": "Sam Hagman <samuel.hagman@gmail.com>",
   "license": "MIT",
