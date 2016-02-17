@@ -20,6 +20,17 @@ define specific fields to return and you get more fields than your Model knows
 about.  It is also helpful for making sure that you keep your Mongoose models
 up-to-date with the data on the server.
 
+## Usage
+
+[Install the NPM module:](https://www.npmjs.com/package/mongoose-strictmodel) `npm install --save mongoose-strictmodel`
+
+Run the plugin on your Schemas.
+```node
+var strictModelPlugin = require('mongoose-strictmodel');
+var Schema = YourMongooseSchema; // Create a mongoose Schema
+
+var SchemaWithStrictModel = strictModelPlugin(Schema);
+```
 
 ## Options
 
