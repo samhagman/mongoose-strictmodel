@@ -35,6 +35,30 @@ module.exports = function StrictModelPlugin(Schema, options) {
     Schema.pre('findOneAndUpdate', function(next) { restrictSelect(this, next); });
     Schema.pre('update', function(next) { restrictSelect(this, next); });
 
+    /**
+     * Checks if query parameters contain references to fields not included in the Mongoose model
+     * @param {Query} query - Mongoose query object
+     */
+    function validateQueryParameters(query) {
+        var queryConditions = query.getQuery();
+        var queryFields = Object.keys(queryConditions);
+
+        // Go through each query field and see if it is in the Mongoose model's Schema
+        for (var queryFieldIndex = 0; queryFieldIndex < queryFields.length; queryFieldIndex += 1) {
+            var queryField = queryFields[ queryFieldIndex ];
+
+            if (paths.indexOf(queryField) === -1) {
+                throw new Error('Attempting to query on a field that is not listed in Mongoose model: ' + queryField);
+            }
+        }
+    }
+
+    /**
+     * Transforms a Mongoose query object to only contain fields listed in the Mongoose model
+     * @param {Query} query - Mongoose query object
+     * @param {function} next - Mongoose middleware helper - call to move on to next middleware
+     * @returns {Query} - Return the transformed query object
+     */
     function restrictSelect(query, next) {
 
         //==================================================================
@@ -43,19 +67,8 @@ module.exports = function StrictModelPlugin(Schema, options) {
         //
         //==================================================================
         if (!allowNonModelQueryParameters) {
-            var queryConditions = query.getQuery();
-            var queryFields = Object.keys(queryConditions);
-
-            // Go through each query field and see if it is in the Mongoose model's Schema
-            for (var queryFieldIndex = 0; queryFieldIndex < queryFields.length; queryFieldIndex += 1) {
-                var queryField = queryFields[ queryFieldIndex ];
-
-                if (paths.indexOf(queryField) === -1) {
-                    throw new Error('Attempting to query on a field that is not listed in Mongoose model: ' + queryField);
-                }
-            }
+            validateQueryParameters(query);
         }
-
 
         //================================================================
         //
