@@ -1,3 +1,6 @@
+[![npm version](https://badge.fury.io/js/mongoose-strictmodel.svg)](https://badge.fury.io/js/mongoose-strictmodel)
+[![bitHound Overall Score](https://www.bithound.io/github/samhagman/mongoose-strictmodel/badges/score.svg)](https://www.bithound.io/github/samhagman/mongoose-strictmodel)
+
 # mongoose-strictmodel
 
 > Mongoose plugin that forces Mongoose queries to respect your Mongoose models.
