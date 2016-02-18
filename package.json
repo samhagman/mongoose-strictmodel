@@ -1,6 +1,6 @@
 {
   "name": "mongoose-strictmodel",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Mongoose plugin that forces Mongoose queries to respect your Mongoose models.",
   "main": "index.js",
   "scripts": {
