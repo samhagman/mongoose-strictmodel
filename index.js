@@ -99,8 +99,7 @@ module.exports = function StrictModelPlugin(Schema, options) {
 
         // If the amount of fields in the new query don't match the the number of fields in the model after subtracting
         // out the original exclusion fields, then the original exclusion projection included fields not in the model
-        if ((Object.keys(newSelectQuery).length !== (paths.length - Object.keys(projectionFieldMap).length))
-            && !allowNonModelSelectionParameters) {
+        if ((Object.keys(newSelectQuery).length !== (paths.length - Object.keys(projectionFieldMap).length)) && !allowNonModelSelectionParameters) {
             throw new Error('Attempting to project on a field that is not listed in Mongoose model.');
         }
 
