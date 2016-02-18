@@ -40,6 +40,7 @@ module.exports = function StrictModelPlugin(Schema, options) {
      * @param {Query} query - Mongoose query object
      */
     function validateQueryParameters(query) {
+
         var queryConditions = query.getQuery();
         var queryFields = Object.keys(queryConditions);
 
@@ -51,6 +52,59 @@ module.exports = function StrictModelPlugin(Schema, options) {
                 throw new Error('Attempting to query on a field that is not listed in Mongoose model: ' + queryField);
             }
         }
+    }
+
+    /**
+     * Transforms a Mongoose inclusive projection to be restricted to the Mongoose model
+     * @param {string[]} projectionFields - The originally requested inclusive projection fields
+     * @returns {{field: 1}|{}} - - A new inclusive projection select query
+     */
+    function transformInclusionProjection(projectionFields) {
+
+        var newSelectQuery = {};
+
+        // Go through each requested field and only include paths in Schema in new select query
+        for (var projFieldIndex = 0; projFieldIndex < projectionFields.length; projFieldIndex += 1) {
+            var projField = projectionFields[ projFieldIndex ];
+
+            if (paths.indexOf(projField) > -1) {
+                newSelectQuery[ projField ] = 1;
+            }
+            else if (!allowNonModelSelectionParameters) {
+                throw new Error('Attempting to project on a field that is not listed in Mongoose model');
+            }
+        }
+
+        return newSelectQuery;
+    }
+
+    /**
+     * Transforms a Mongoose exclusive projection to be restricted to the Mongoose model
+     * @param {{field: 0}} projectionFieldMap - The originally requested exclusive projection fields in a map
+     * @returns {{field: 1}|{}} - A new inclusive projection select query
+     */
+    function transformExclusionProjection(projectionFieldMap) {
+
+        var newSelectQuery = {};
+
+        // Iterate through Schema paths and add all but the excluded ones to new select query
+        for (var pathIndex = 0; pathIndex < paths.length; pathIndex += 1) {
+            var path = paths[ pathIndex ];
+
+            // If this path wasn't excluded by select parameters, add to new query
+            if (projectionFieldMap[ path ] !== 0) {
+                newSelectQuery[ path ] = 1;
+            }
+        }
+
+        // If the amount of fields in the new query don't match the the number of fields in the model after subtracting
+        // out the original exclusion fields, then the original exclusion projection included fields not in the model
+        if ((Object.keys(newSelectQuery).length !== (paths.length - Object.keys(projectionFieldMap).length))
+            && !allowNonModelSelectionParameters) {
+            throw new Error('Attempting to project on a field that is not listed in Mongoose model.');
+        }
+
+        return newSelectQuery;
     }
 
     /**
@@ -70,57 +124,31 @@ module.exports = function StrictModelPlugin(Schema, options) {
             validateQueryParameters(query);
         }
 
-        //================================================================
+        //==================================================================
         //
         //               CHECK PROJECTION FOR FIELDS NOT IN MODEL
         //
-        //================================================================
+        //==================================================================
 
         var projectionFieldMap = query._fields || {};
         var projectionFields = Object.keys(projectionFieldMap);
-        var numSelectedPathIndexes = projectionFields.length;
-        var newSelectQuery = {};
 
         // If there are no fields selected, select all of the model's fields
-        if (numSelectedPathIndexes === 0) {
+        if (projectionFields.length === 0) {
+
             query.select(paths.join(' '));
             return next();
+
         }
         else if (query._fields[ projectionFields[ 0 ] ] === 1) { // Query was Inclusion Projection
 
-            // Go through each requested field and only include paths in Schema in new select query
-            for (var projFieldIndex = 0; projFieldIndex < projectionFields.length; projFieldIndex += 1) {
-                var projField = projectionFields[ projFieldIndex ];
-
-                if (paths.indexOf(projField) > -1) {
-                    newSelectQuery[ projField ] = 1;
-                }
-                else if (!allowNonModelSelectionParameters) {
-                    throw new Error('Attempting to project on a field that is not listed in Mongoose model');
-                }
-            }
-
-            query._fields = newSelectQuery;
+            query._fields = transformInclusionProjection(projectionFields);
             return next();
 
         }
         else { // Query was Exclusion Projection
 
-            // Iterate through Schema paths and add all but the excluded ones to new select query
-            for (var pathIndex = 0; pathIndex < paths.length; pathIndex += 1) {
-                var path = paths[ pathIndex ];
-
-                // If this path wasn't excluded by select parameters, add to new query
-                if (projectionFieldMap[ path ] !== 0) {
-                    newSelectQuery[ path ] = 1;
-                }
-            }
-
-            if (Object.keys(newSelectQuery).length !== (paths.length - projectionFields.length) && !allowNonModelSelectionParameters) {
-                throw new Error('Attempting to project on a field that is not listed in Mongoose model.');
-            }
-
-            query._fields = newSelectQuery;
+            query._fields = transformExclusionProjection(projectionFieldMap);
             return next();
         }
     }
